@@ -87,7 +87,7 @@ var remoteColumns = [
             { field: 'CurrentSalary', headerText: 'Current Salary', width: 150 },
         ]
 var grid = new ej.grids.Grid({
-  dataSource: largeDataset.slice(0,100),
+  dataSource: largeDataset,
   allowSorting: true,
   editSettings: {allowAdding: true, allowEditing: true, allowDeleting: true},
   allowFiltering: true,
@@ -100,7 +100,6 @@ var grid = new ej.grids.Grid({
     return data.FIELD4 > 15;
   }
 });
-// document.getElementById('btn').addEventListener('click', function(){
   grid.appendTo('#Grid');
 var indicatortypes = [
     { id: 'allowPaging', type: 'allowPaging' },
@@ -145,7 +144,6 @@ var dataObject = new ej.dropdowns.DropDownList({
         if (dataObject.value === 'localData') {
             grid.changeDataSource(largeDataset, localColumns)
         } else if (dataObject.value === 'remoteData') {
-            grid.query = new ej.data.Query().addParams('dataCount', '100');
            grid.changeDataSource(data, remoteColumns)
            grid.isRowSelectable = function (data, column){
             return data.CurrentSalary > 2500;
@@ -161,3 +159,4 @@ var persist = new ej.buttons.CheckBox({
     }
 });
 persist.appendTo('#persist');
+
