@@ -87,19 +87,21 @@ var remoteColumns = [
             { field: 'CurrentSalary', headerText: 'Current Salary', width: 150 },
         ]
 var grid = new ej.grids.Grid({
-  dataSource: largeDataset,
+  dataSource: largeDataset.slice(0,200),
   allowSorting: true,
   editSettings: {allowAdding: true, allowEditing: true, allowDeleting: true},
   allowFiltering: true,
   toolbar: ['Search', 'Add', 'Edit', 'Delete', 'Update', 'Cancel'],
   allowGrouping: true,
   height: 300,
+  pageSettings: {pageSize: 20},
   allowPaging: true,
   columns: localColumns,
   isRowSelectable: function(data, column){
     return data.FIELD4 > 15;
   }
 });
+// document.getElementById('btn').addEventListener('click', function(){
   grid.appendTo('#Grid');
 var indicatortypes = [
     { id: 'allowPaging', type: 'allowPaging' },
@@ -142,12 +144,19 @@ var dataObject = new ej.dropdowns.DropDownList({
     value: 'localData',
     change: function (e) {
         if (dataObject.value === 'localData') {
-            grid.changeDataSource(largeDataset, localColumns)
+            grid.changeDataSource(largeDataset, localColumns);
+            grid.isRowSelectable = function (data, column){
+            return data.FIELD4 > 15;
+           }
+            grid.freezeRefresh();
+
         } else if (dataObject.value === 'remoteData') {
+            grid.query = new ej.data.Query().addParams('dataCount', '200');
            grid.changeDataSource(data, remoteColumns)
            grid.isRowSelectable = function (data, column){
             return data.CurrentSalary > 2500;
            }
+           grid.freezeRefresh();
         }
     },
 });
@@ -156,7 +165,7 @@ dataObject.appendTo('#data');
 var persist = new ej.buttons.CheckBox({
     change: function(e) {
         grid.selectionSettings.persistSelection = e.checked;
+        grid.freezeRefresh();
     }
 });
 persist.appendTo('#persist');
-
