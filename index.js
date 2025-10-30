@@ -114,7 +114,7 @@ var data = new ej.data.DataManager({
 var localColumns = [
     { type: 'checkbox', width: 50 },
     { field: 'CustomerID', visible: false, headerText: 'Customer ID', textAlign: 'Right', width: 120, isPrimaryKey: true },
-    { field: 'CustomerName', headerText: 'Customer Name', width: 150 },
+    { field: 'CustomerName', headerText: 'Customer Name', width: 170 },
     { field: 'OrderID', headerText: 'Order ID', textAlign: 'Right', width: 120 },
     { field: 'OrderDate', headerText: 'OrderDate', width: 150, textAlign: 'Right', format: 'yMd' },
     { field: 'ShippedDate', headerText: 'Shipped Date', width: 150, textAlign: 'Right', format: 'yMd' },
@@ -218,3 +218,4 @@ var persist = new ej.buttons.CheckBox({
     }
 });
 persist.appendTo('#persist');
+
