@@ -182,34 +182,34 @@ var dropDownListObject = new ej.dropdowns.DropDownList({
 dropDownListObject.appendTo('#property');
 
 
-var dataType = [
-    { id: 'localData', type: 'localData' },
-    { id: 'remoteData', type: 'remoteData' },
-];
-var dataObject = new ej.dropdowns.DropDownList({
-    dataSource: dataType,
-    width: 200,
-    fields: { text: 'type', value: 'id' },
-    value: 'localData',
-    change: function (e) {
-        if (dataObject.value === 'localData') {
-            grid.changeDataSource(dataSource, localColumns);
-            grid.isRowSelectable = function (data, column) {
-                return data.Status !== 'Delivered';
-            }
-            grid.freezeRefresh();
+// var dataType = [
+//     { id: 'localData', type: 'localData' },
+//     { id: 'remoteData', type: 'remoteData' },
+// ];
+// var dataObject = new ej.dropdowns.DropDownList({
+//     dataSource: dataType,
+//     width: 200,
+//     fields: { text: 'type', value: 'id' },
+//     value: 'localData',
+//     change: function (e) {
+//         if (dataObject.value === 'localData') {
+//             grid.changeDataSource(dataSource, localColumns);
+//             grid.isRowSelectable = function (data, column) {
+//                 return data.Status !== 'Delivered';
+//             }
+//             grid.freezeRefresh();
 
-        } else if (dataObject.value === 'remoteData') {
-            grid.query = new ej.data.Query().addParams('dataCount', '200');
-            grid.changeDataSource(data, remoteColumns)
-            grid.isRowSelectable = function (data, column) {
-                return data.CurrentSalary > 2500;
-            }
-            grid.freezeRefresh();
-        }
-    },
-});
-dataObject.appendTo('#data');
+//         } else if (dataObject.value === 'remoteData') {
+//             grid.query = new ej.data.Query().addParams('dataCount', '200');
+//             grid.changeDataSource(data, remoteColumns)
+//             grid.isRowSelectable = function (data, column) {
+//                 return data.CurrentSalary > 2500;
+//             }
+//             grid.freezeRefresh();
+//         }
+//     },
+// });
+// dataObject.appendTo('#data');
 
 var persist = new ej.buttons.CheckBox({
     change: function (e) {
@@ -218,4 +218,5 @@ var persist = new ej.buttons.CheckBox({
     }
 });
 persist.appendTo('#persist');
+
 
