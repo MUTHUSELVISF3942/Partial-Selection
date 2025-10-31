@@ -1,8 +1,5 @@
-const STATUS_NOT_DELIVERED = [
-  'Ready for shipping',
-  'In transit',
-  'Out for delivery'
-];
+// Current date: October 31, 2025 (hardcoded for consistency)
+const TODAY = new Date('2025-10-31');
 
 // ---- Helper: random integer (inclusive) ----
 function randInt(min, max) {
@@ -14,24 +11,68 @@ function randChoice(arr) {
   return arr[randInt(0, arr.length - 1)];
 }
 
-// ---- Helper: random full name (simple built‑in list) ----
+// ---- Helper: random full name (simple built-in list) ----
 const FIRST_NAMES = [
-  'James','Olivia','Liam','Emma','Noah','Ava','Oliver','Sophia','Elijah','Isabella',
-  'William','Mia','Benjamin','Charlotte','Lucas','Amelia','Henry','Harper','Alexander','Evelyn'
+  'James',
+  'Olivia',
+  'Liam',
+  'Emma',
+  'Noah',
+  'Ava',
+  'Oliver',
+  'Sophia',
+  'Elijah',
+  'Isabella',
+  'William',
+  'Mia',
+  'Benjamin',
+  'Charlotte',
+  'Lucas',
+  'Amelia',
+  'Henry',
+  'Harper',
+  'Alexander',
+  'Evelyn',
 ];
 const LAST_NAMES = [
-  'Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Rodriguez','Martinez',
-  'Hernandez','Lopez','Gonzalez','Wilson','Anderson','Thomas','Taylor','Moore','Jackson','Martin'
+  'Smith',
+  'Johnson',
+  'Williams',
+  'Brown',
+  'Jones',
+  'Garcia',
+  'Miller',
+  'Davis',
+  'Rodriguez',
+  'Martinez',
+  'Hernandez',
+  'Lopez',
+  'Gonzalez',
+  'Wilson',
+  'Anderson',
+  'Thomas',
+  'Taylor',
+  'Moore',
+  'Jackson',
+  'Martin',
 ];
 function randomName() {
   return `${randChoice(FIRST_NAMES)} ${randChoice(LAST_NAMES)}`;
 }
 
-// ---- Generate a random date in Oct or Nov 2025 ----
-function randomOctNovDate() {
+// ---- Generate random early date (Sep 1-20, 2025) for Delivered ----
+function randomEarlyDate() {
   const year = 2025;
-  const month = randChoice([9, 10]);           // 9 = Oct, 10 = Nov
-  const day   = randInt(1, 28);                // safe up to 28
+  const month = 8; // Sep (0=Jan)
+  const day = randInt(1, 20);
+  return new Date(year, month, day);
+}
+
+// ---- Generate random late date (Oct 20-31, 2025) for non-Delivered ----
+function randomLateDate() {
+  const year = 2025;
+  const month = 9; // Oct
+  const day = randInt(20, 31);
   return new Date(year, month, day);
 }
 
@@ -41,68 +82,132 @@ function addDays(date, days) {
   d.setDate(d.getDate() + days);
   return d;
 }
-function randInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 // ---- Helper: random float with 2 decimals ----
 function randFloat(min, max, decimals = 2) {
-  const factor = Math.pow(10, decimals);
   return (Math.random() * (max - min) + min).toFixed(decimals);
 }
 
-// ---- Determine status based on DeliveryDate ----
-function getStatus(deliveryDate) {
-  // deliveryDate.getMonth() → 0 = Jan … 9 = Oct
-  return deliveryDate.getMonth() === 9 ? 'Delivered' : randChoice(STATUS_NOT_DELIVERED);
+// ---- Determine status based on dates ----
+function getStatus(orderDate, deliveryDate) {
+  if (deliveryDate < TODAY) {
+    return 'Delivered';
+  } else if (deliveryDate.toDateString() === TODAY.toDateString()) {
+    return 'Out for delivery';
+  } else {
+    // DeliveryDate > TODAY
+    const yesterday = new Date(TODAY);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (
+      orderDate.toDateString() === TODAY.toDateString() ||
+      orderDate.toDateString() === yesterday.toDateString()
+    ) {
+      return 'Ready for shipping';
+    } else {
+      return 'In transit';
+    }
+  }
 }
 
-// ------------------------------------------------------------
-//  Generate 200 records
-// ------------------------------------------------------------
-const dataSource = [];
-const usedCustIds = new Set();
-const usedOrderIds = new Set();
+// ---- Get freight (transit-based, Nov uplift, clamped $25–$250) ----
 function getFreight(orderDate, deliveryDate) {
   const transitDays = (deliveryDate - orderDate) / (1000 * 60 * 60 * 24);
   const base = transitDays * 8; // ~$8 per day
   const monthFactor = deliveryDate.getMonth() === 10 ? 1.3 : 1.0; // Nov = 30% higher
   const randomAdd = parseFloat(randFloat(15, 80)); // random variation
   const total = (base + randomAdd) * monthFactor;
-  return Math.min(Math.max(total, 25), 250).toFixed(2); // clamp $25 – $250
+  const freight = Math.min(Math.max(total, 25), 250);
+  return Math.round(freight * 100) / 100; // Round to 2 decimals
 }
 
+// ------------------------------------------------------------
+// Generate delivered indices: exactly 75, distributed non-continuously
+// First 10 records: 4 Delivered
+// Second 10 records: 3 Delivered
+// Remaining 68 randomly from 21-200
+// ------------------------------------------------------------
+const deliveredIndices = new Set();
+
+// First 10: shuffle and take 4
+let first10 = Array.from({ length: 10 }, (_, i) => i);
+first10.sort(() => Math.random() - 0.5);
+for (let k = 0; k < 4; k++) {
+  deliveredIndices.add(first10[k]);
+}
+
+// Second 10: shuffle and take 3
+let second10 = Array.from({ length: 10 }, (_, i) => 10 + i);
+second10.sort(() => Math.random() - 0.5);
+for (let k = 0; k < 3; k++) {
+  deliveredIndices.add(second10[k]);
+}
+
+// Remaining 68 from 20-199 (0-based: 20-199)
+let remaining = Array.from({ length: 180 }, (_, i) => 20 + i);
+remaining.sort(() => Math.random() - 0.5);
+for (let k = 0; k < 68; k++) {
+  deliveredIndices.add(remaining[k]);
+}
+
+// ------------------------------------------------------------
+// Generate 200 records
+// ------------------------------------------------------------
+const dataSource = [];
+const usedCustIds = new Set();
+const usedOrderIds = new Set();
+
 for (let i = 1; i <= 200; i++) {
-  // ---- CustomerID (CUST‑001 … CUST‑200) ----
+  const idx = i - 1; // 0-based for indices
+  // ---- CustomerID (CUST-001 … CUST-200) ----
   const custId = `CUST-${String(i).padStart(3, '0')}`;
   usedCustIds.add(custId);
 
   // ---- CustomerName ----
   const custName = randomName();
 
-  // ---- OrderID (ORD‑10001 …) ----
+  // ---- OrderID (ORD-10001 …) ----
   const orderId = `ORD-${10000 + i}`;
   usedOrderIds.add(orderId);
 
-  // ---- Dates (Oct/Nov 2025 only) ----
-  const orderDate    = randomOctNovDate();                                 // placed
-  const shippedDate  = addDays(orderDate, randInt(1, 5));                  // 1‑5 days later
-  const deliveryDate = addDays(shippedDate, randInt(2, 8));                // 2‑8 days in transit
+  let orderDate, shippedDate, deliveryDate;
+
+  // ---- Dates ----
+  if (deliveredIndices.has(idx)) {
+    // Early for Delivered: ensure delivery < TODAY
+    orderDate = randomEarlyDate();
+    shippedDate = addDays(orderDate, randInt(1, 5));
+    deliveryDate = addDays(shippedDate, randInt(2, 8));
+    while (deliveryDate >= TODAY) {
+      shippedDate = addDays(orderDate, randInt(1, 5));
+      deliveryDate = addDays(shippedDate, randInt(2, 8));
+    }
+  } else {
+    // Late for non-Delivered: ensure delivery >= TODAY
+    orderDate = randomLateDate();
+    shippedDate = addDays(orderDate, randInt(1, 5));
+    deliveryDate = addDays(shippedDate, randInt(2, 8));
+    while (deliveryDate < TODAY) {
+      shippedDate = addDays(orderDate, randInt(1, 5));
+      deliveryDate = addDays(shippedDate, randInt(2, 8));
+    }
+  }
+
+  // Ensure ShippedDate > OrderDate and DeliveryDate > ShippedDate (handled by addDays)
 
   // ---- Status ----
-  const status = getStatus(deliveryDate);
+  const status = getStatus(orderDate, deliveryDate);
   const freight = getFreight(orderDate, deliveryDate);
 
-  // ---- Push record (ISO‑8601 YYYY‑MM‑DD strings) ----
+  // ---- Push record (ISO-8601 YYYY-MM-DD strings) ----
   dataSource.push({
-    CustomerID:   custId,
+    CustomerID: custId,
     CustomerName: custName,
-    OrderID:      orderId,
-    OrderDate:    orderDate.toISOString().split('T')[0],
-    ShippedDate:  shippedDate.toISOString().split('T')[0],
+    OrderID: orderId,
+    OrderDate: orderDate.toISOString().split('T')[0],
+    ShippedDate: shippedDate.toISOString().split('T')[0],
     DeliveryDate: deliveryDate.toISOString().split('T')[0],
-    Status:       status,
-    Freight:      freight
+    Status: status,
+    Freight: freight.toFixed(2),
   });
 }
 
@@ -218,5 +323,6 @@ var persist = new ej.buttons.CheckBox({
     }
 });
 persist.appendTo('#persist');
+
 
 
